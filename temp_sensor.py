@@ -6,6 +6,7 @@ import time
 import base64
 import pandas as pd
 from matplotlib import pyplot as plt
+from matplotlib.dates import MonthLocator, DateFormatter
 import datetime
  
 # Add the one wire module to the kernel
@@ -20,14 +21,13 @@ device_file_greenhouse = device_folder_greenhouse + '/w1_slave'
 #device_file_outside = device_folder + '/w1_save'
 
 def __create_graph(csv_path):
-    ns = 1000000000
     # Read in the csv file that contains time,greenhouse temp,outside temp
     temps = pd.read_csv(csv_path)
     # Get the column names (time,greenhouse,outside)
     column_names = list(temps.columns)
     # Get the time for the temperature readings
     time = temps[temps.columns[0]]
-    time = time.apply(lambda x : datetime.datetime.fromtimestamp(x/ns))
+    time = time.apply(lambda x : datetime.datetime.fromtimestamp(x))
     # Get the greenhouse temperatures
     greenhouse_temps = temps[temps.columns[1]]
     # Get the outside temperatures
@@ -51,6 +51,11 @@ def __create_graph(csv_path):
     plt.title('Greenhouse vs Outside', fontsize = 20)
     # Set the plot legend
     plt.legend()
+    months = MonthLocator(range(1, 13), bymonthday=1, interval=1)
+    monthsFmt = DateFormatter("%b '%y")
+    ax = plt.gca()
+    ax.xaxis.set_major_locator(months)
+    ax.xaxis.set_major_formatter(monthsFmt)
     # Save the plot to disk
     plt.savefig(csv_path[:-3]+'png', bbox_inches="tight")
 
@@ -96,7 +101,7 @@ def __read_temp(device_file):
 
 def __write_temp(csv_path):
     # Get the time of the reading
-    current_time = time.time_ns()
+    current_time = time.time()
     # Read from the greenhouse sensor
     greenhouse_temp = __read_temp(device_file_greenhouse)
     # Read from the outside sensor (which presently does not exist)
