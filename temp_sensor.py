@@ -51,11 +51,14 @@ def __create_graph(csv_path):
     plt.title('Greenhouse vs Outside', fontsize = 20)
     # Set the plot legend
     plt.legend()
+    # Show the month and year on the x axis
     months = MonthLocator(range(1, 13), bymonthday=1, interval=1)
     monthsFmt = DateFormatter("%b '%y")
     ax = plt.gca()
     ax.xaxis.set_major_locator(months)
     ax.xaxis.set_major_formatter(monthsFmt)
+    # Include y axis tick marks on the right side of the plot
+    plt.tick_params(labelright=True)
     # Save the plot to disk
     plt.savefig(csv_path[:-3]+'png', bbox_inches="tight")
 
