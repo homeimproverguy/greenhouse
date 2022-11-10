@@ -17,8 +17,9 @@ os.system('modprobe w1-therm')
 base_dir = '/sys/bus/w1/devices/'
 device_folder_greenhouse = glob.glob(base_dir + '28-3c23f6499d8c')[0]
 device_file_greenhouse = device_folder_greenhouse + '/w1_slave'
-#device_folder_outside = glob.glob(base_dir + '28*')[0]
-#device_file_outside = device_folder + '/w1_save'
+
+device_folder_outside = glob.glob(base_dir + '28-3ca6f649db80')[0]
+device_file_outside = device_folder_outside + '/w1_slave'
 
 def __create_graph(csv_path):
     # Read in the csv file that contains time,greenhouse temp,outside temp
@@ -39,7 +40,7 @@ def __create_graph(csv_path):
     # Add the time, greenhouse, and outside temperatures to the plot
     plt.plot(time, greenhouse_temps, color = 'g', linestyle = 'dashed',
              marker = 'o',label = "Greenhouse")
-    plt.plot(time, outside_temps, color = 'b', linestyle = 'solid',
+    plt.plot(time, outside_temps, color = 'y', linestyle = 'solid',
              marker = 'o',label = "Outside")
     # Set the angle at which the x labels will be displayed
     plt.xticks(rotation = 80)
@@ -57,6 +58,7 @@ def __create_graph(csv_path):
     ax = plt.gca()
     ax.xaxis.set_major_locator(months)
     ax.xaxis.set_major_formatter(monthsFmt)
+    plt.grid(axis='y', which='both')
     # Include y axis tick marks on the right side of the plot
     plt.tick_params(labelright=True)
     # Save the plot to disk
@@ -108,18 +110,22 @@ def __write_temp(csv_path):
     # Read from the greenhouse sensor
     greenhouse_temp = __read_temp(device_file_greenhouse)
     # Read from the outside sensor (which presently does not exist)
-    outside = '30'
+    outside_temp = __read_temp(device_file_outside)
     # Write the readings to the csv file in the format of time,greenhouse,outside
     f_out = open(csv_path, 'a')
-    f_out.write(str(current_time) + ',' + str(round(greenhouse_temp)) + ',' + outside + '\n')
+    f_out.write(str(current_time) + ',' + str(round(greenhouse_temp)) + ',' + str(round(outside_temp)) + '\n')
     f_out.close()
 
 def exec_temp():
     while True:
-        csv_path = '/var/www/html/temp_readings.csv'
-        __write_temp(csv_path)
-        __create_graph(csv_path)
-        __create_html(csv_path)
+        try: 
+            csv_path = '/var/www/html/temp_readings.csv'
+            __write_temp(csv_path)
+            __create_graph(csv_path)
+            __create_html(csv_path)
+        except:
+            # Do nothing, just restart the loop
+            pass
         time.sleep(900)
 
 def main():
