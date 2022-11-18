@@ -3,11 +3,6 @@
 import os
 import glob
 import time
-import base64
-import pandas as pd
-from matplotlib import pyplot as plt
-from matplotlib.dates import MonthLocator, DateFormatter
-import datetime
  
 # Add the one wire module to the kernel
 os.system('modprobe w1-gpio')
@@ -21,67 +16,10 @@ device_file_greenhouse = device_folder_greenhouse + '/w1_slave'
 device_folder_outside = glob.glob(base_dir + '28-3ca6f649db80')[0]
 device_file_outside = device_folder_outside + '/w1_slave'
 
-def __create_graph(csv_path):
-    # Read in the csv file that contains time,greenhouse temp,outside temp
-    temps = pd.read_csv(csv_path)
-    # Get the column names (time,greenhouse,outside)
-    column_names = list(temps.columns)
-    # Get the time for the temperature readings
-    time = temps[temps.columns[0]]
-    time = time.apply(lambda x : datetime.datetime.fromtimestamp(x))
-    # Get the greenhouse temperatures
-    greenhouse_temps = temps[temps.columns[1]]
-    # Get the outside temperatures
-    outside_temps = temps[temps.columns[2]]
-    # Set the size of the plot
-    f = plt.figure()
-    f.set_figwidth(18)
-    f.set_figheight(7)
-    # Add the time, greenhouse, and outside temperatures to the plot
-    plt.plot(time, greenhouse_temps, color = 'g', linestyle = 'dashed',
-             marker = 'o',label = "Greenhouse")
-    plt.plot(time, outside_temps, color = 'y', linestyle = 'solid',
-             marker = 'o',label = "Outside")
-    # Set the angle at which the x labels will be displayed
-    plt.xticks(rotation = 80)
-    # Set the x axis title
-    plt.xlabel('Dates')
-    # Set the y axis title
-    plt.ylabel('Temperature(°F)')
-    # Set the plot title
-    plt.title('Greenhouse vs Outside', fontsize = 20)
-    # Set the plot legend
-    plt.legend()
-    # Show the month and year on the x axis
-    months = MonthLocator(range(1, 13), bymonthday=1, interval=1)
-    monthsFmt = DateFormatter("%b '%y")
-    ax = plt.gca()
-    ax.xaxis.set_major_locator(months)
-    ax.xaxis.set_major_formatter(monthsFmt)
-    plt.grid(axis='y', which='both')
-    # Include y axis tick marks on the right side of the plot
-    plt.tick_params(labelright=True)
-    # Save the plot to disk
-    plt.savefig(csv_path[:-3]+'png', bbox_inches="tight")
+device_folder_barrel1 = glob.glob(base_dir + '28-3c1ff6494742')[0]
+device_file_barrel1 = device_folder_barrel1 + '/w1_slave'
 
-def __create_html(csv_path):
-    # Create a very basic html that includes the location of the plot on disk
-    html = """<!DOCTYPE html>
-    <html>
-       <head>
-          <title>Greenhouse Vs Outside Temperatures</title>
-       </head>
-       <body>
-          <img src=\"""" + './temp_readings.png' + """\" alt=\"Greenhouse vs outside temperatures graph\">
-       </body>
-    </html>
-    """
-    # Write the html to a file on disk
-    f_out = open('/var/www/html/index.html', 'w')
-    f_out.write(html)
-    f_out.close()
- 
-def __read_temp_raw(device_file):
+def read_temp_raw(device_file):
     # Read from the temperature sensor
     f_in = open(device_file, 'r')
     lines = f_in.readlines()
@@ -89,13 +27,13 @@ def __read_temp_raw(device_file):
     # Return what was read from the sensor
     return lines
  
-def __read_temp(device_file):
+def read_temp(device_file):
     # Get the sensor reading
-    lines = __read_temp_raw(device_file)
+    lines = read_temp_raw(device_file)
     # Filter out temperature (which is in Celsius)
     while lines[0].strip()[-3:] != 'YES':
         time.sleep(0.2)
-        lines = __read_temp_raw(device_file)
+        lines = read_temp_raw(device_file)
     equals_pos = lines[1].find('t=')
     if equals_pos != -1:
         temp_string = lines[1][equals_pos+2:]
@@ -104,32 +42,16 @@ def __read_temp(device_file):
         temp_f = temp_c * 9.0 / 5.0 + 32.0
         return temp_f
 
-def __write_temp(csv_path):
+def write_temp(csv_path):
     # Get the time of the reading
     current_time = time.time()
     # Read from the greenhouse sensor
-    greenhouse_temp = __read_temp(device_file_greenhouse)
-    # Read from the outside sensor (which presently does not exist)
-    outside_temp = __read_temp(device_file_outside)
+    greenhouse_temp = read_temp(device_file_greenhouse)
+    # Read from the outside sensor
+    outside_temp = read_temp(device_file_outside)
+    # Read from barrel1 sensor
+    barrel1_temp = read_temp(device_file_barrel1)
     # Write the readings to the csv file in the format of time,greenhouse,outside
     f_out = open(csv_path, 'a')
-    f_out.write(str(current_time) + ',' + str(round(greenhouse_temp)) + ',' + str(round(outside_temp)) + '\n')
+    f_out.write(str(current_time) + ',' + str(round(greenhouse_temp)) + ',' + str(round(outside_temp)) + ',' + str(round(barrel1_temp)) +'\n')
     f_out.close()
-
-def exec_temp():
-    while True:
-        try: 
-            csv_path = '/var/www/html/temp_readings.csv'
-            __write_temp(csv_path)
-            __create_graph(csv_path)
-            __create_html(csv_path)
-        except:
-            # Do nothing, just restart the loop
-            pass
-        time.sleep(900)
-
-def main():
-    exec_temp()
-
-if __name__ == "__main__":
-    main()
