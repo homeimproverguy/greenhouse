@@ -3,14 +3,20 @@
 import temp_sensor
 import grapher
 import time
+import light_sensor
 
 def exec_temp():
     while True:
         #try: 
-            csv_path = '/var/www/html/temp_readings.csv'
-            temp_sensor.write_temp(csv_path)
-            grapher.create_graph(csv_path)
-            grapher.create_html(csv_path)
+            base_path = '/var/www/html/'
+            csv_temp_path = base_path + 'temp_readings.csv'
+            csv_light_path = base_path + 'light_readings.csv'
+            # Get the time of the reading
+            current_time = time.time()
+            temp_sensor.write_temp(csv_temp_path, current_time)
+            light_sensor.write_light(csv_light_path, current_time)
+            grapher.create_graph(csv_temp_path, csv_light_path)
+            grapher.create_html(csv_temp_path)
         #except:
             # Do nothing, just restart the loop
          #   pass

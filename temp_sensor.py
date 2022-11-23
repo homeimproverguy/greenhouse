@@ -19,6 +19,12 @@ device_file_outside = device_folder_outside + '/w1_slave'
 device_folder_barrel1 = glob.glob(base_dir + '28-3c1ff6494742')[0]
 device_file_barrel1 = device_folder_barrel1 + '/w1_slave'
 
+device_folder_barrel2 = glob.glob(base_dir + '28-3c9ff6499bb9')[0]
+device_file_barrel2 = device_folder_barrel2 + '/w1_slave'
+
+device_folder_barrel3 = glob.glob(base_dir + '28-3c0ff6494f0f')[0]
+device_file_barrel3 = device_folder_barrel3 + '/w1_slave'
+
 def read_temp_raw(device_file):
     # Read from the temperature sensor
     f_in = open(device_file, 'r')
@@ -42,16 +48,18 @@ def read_temp(device_file):
         temp_f = temp_c * 9.0 / 5.0 + 32.0
         return temp_f
 
-def write_temp(csv_path):
-    # Get the time of the reading
-    current_time = time.time()
+def write_temp(csv_path, current_time):
     # Read from the greenhouse sensor
     greenhouse_temp = read_temp(device_file_greenhouse)
     # Read from the outside sensor
     outside_temp = read_temp(device_file_outside)
     # Read from barrel1 sensor
     barrel1_temp = read_temp(device_file_barrel1)
+    # Read from barrel2 sensor
+    barrel2_temp = read_temp(device_file_barrel2)
+    # Read from barrel3 sensor
+    barrel3_temp = read_temp(device_file_barrel3)
     # Write the readings to the csv file in the format of time,greenhouse,outside
     f_out = open(csv_path, 'a')
-    f_out.write(str(current_time) + ',' + str(round(greenhouse_temp)) + ',' + str(round(outside_temp)) + ',' + str(round(barrel1_temp)) +'\n')
+    f_out.write(str(current_time) + ',' + str(round(greenhouse_temp)) + ',' + str(round(outside_temp)) + ',' + str(round(barrel1_temp)) + ',' + str(round(barrel2_temp)) + ',' + str(round(barrel3_temp)) + '\n')
     f_out.close()
