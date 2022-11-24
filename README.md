@@ -36,4 +36,4 @@ Here the temperature reading is t=28625, which means a temperature of 28.625 deg
 
 That’s all that’s required to set up the one wire interface. Now you can run one of the programs below to output the temperature to an SSH terminal or to an LCD…"
 
-
+I used the following website to setup the light resistor and MCP3008: https://littlebirdelectronics.com.au/guides/13/use-analogue-sensors-with-raspberry-pi
